@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>コピー時ポップアップ - モックアップ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI',
+      'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', Arial, 'メイリオ', Meiryo, sans-serif;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    color: #454545;
+  }
+
+  /* ポップアップ本体 */
+  .Popup {
+    position: relative;
+    background: #fff; border-radius: 10px; padding: 32px 32px 28px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15); width: 440px;
+    animation: popIn .15s ease-out;
+  }
+  @keyframes popIn { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* ×ボタン */
+  .Popup_Close {
+    position: absolute; top: -12px; right: -12px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #fff; border: 1px solid hsl(0,0%,88%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: .12s ease-in;
+  }
+  .Popup_Close:hover { background: hsl(0,0%,96%); }
+  .Popup_Close svg { width: 12px; height: 12px; fill: hsl(0,0%,46%); }
+
+  /* タイトル */
+  .Popup_Title {
+    font-size: 16px; font-weight: 700; text-align: center; margin-bottom: 8px;
+  }
+
+  /* 区切り線 */
+  .Popup_Divider {
+    width: 40px; height: 3px; background: #0babe5; border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  /* 説明文 */
+  .Popup_Desc {
+    font-size: 13px; color: #999; margin-bottom: 20px; line-height: 1.8;
+  }
+
+  /* トグルエリア */
+  .Popup_ToggleArea {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: hsl(0,0%,98%); border-radius: 8px;
+    cursor: pointer; user-select: none; margin-bottom: 24px;
+    border: 1px solid hsl(0,0%,93%);
+    transition: .12s ease-in;
+  }
+  .Popup_ToggleArea:hover { background: #f7fdff; border-color: #0babe5; }
+
+  /* トグルスイッチ */
+  .Toggle {
+    width: 44px; height: 24px; border-radius: 12px; position: relative;
+    transition: background .2s; flex-shrink: 0;
+  }
+  .Toggle._on { background: #0babe5; }
+  .Toggle._off { background: hsl(0,0%,74%); }
+  .Toggle_Knob {
+    width: 20px; height: 20px; background: #fff; border-radius: 50%;
+    position: absolute; top: 2px; transition: left .2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .Toggle._on .Toggle_Knob { left: 22px; }
+  .Toggle._off .Toggle_Knob { left: 2px; }
+
+  .Popup_ToggleText { font-size: 13px; font-weight: 700; }
+
+  /* ボタンエリア */
+  .Popup_Actions { display: flex; gap: 10px; justify-content: center; }
+  .Popup_Btn {
+    padding: 12px 32px; border-radius: 24px; font-size: 13px;
+    cursor: pointer; font-weight: 700; transition: .12s ease-in;
+  }
+  .Popup_Btn._cancel {
+    background: #fff; color: hsl(0,65%,60%); border: 1px solid hsl(0,65%,60%);
+  }
+  .Popup_Btn._cancel:hover { background: hsl(0,65%,97%); }
+  .Popup_Btn._copy {
+    background: #0babe5; color: #fff; border: 1px solid #0babe5;
+  }
+  .Popup_Btn._copy:hover { background: #026990; border-color: #026990; }
+
+  /* フラッシュメッセージ */
+  .Flash {
+    display: none; position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
+    padding: 10px 28px; border-radius: 6px; font-size: 13px; z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    background: #e8f5e9; color: #2e7d32; font-weight: 700;
+    animation: flashIn .25s ease-out;
+  }
+  @keyframes flashIn { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="Popup">
+  <button class="Popup_Close" id="closeBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><polygon points="512,52.535 459.467,0.002 256.002,203.462 52.538,0.002 0,52.535 203.47,256.005 0,459.465 52.533,511.998 256.002,308.527 459.467,511.998 512,459.475 308.536,256.005"></polygon></svg>
+  </button>
+
+  <div class="Popup_Title">マスキングされた箇所があります</div>
+  <div class="Popup_Divider"></div>
+  <div class="Popup_Desc">
+    マスキングを適用した状態でコピーしますか？<br>
+    適用すると、マスキング箇所は「＊」に置き換わります。
+  </div>
+
+  <div class="Popup_ToggleArea" id="toggleArea">
+    <div class="Toggle _on" id="toggle"><div class="Toggle_Knob"></div></div>
+    <span class="Popup_ToggleText" id="toggleText">マスキングを適用してコピー</span>
+  </div>
+
+  <div class="Popup_Actions">
+    <button class="Popup_Btn _cancel" id="cancelBtn">キャンセル</button>
+    <button class="Popup_Btn _copy" id="copyBtn">コピーする</button>
+  </div>
+</div>
+
+<div class="Flash" id="flash"></div>
+
+<script>
+  const toggle = document.getElementById('toggle');
+  const toggleText = document.getElementById('toggleText');
+  const flash = document.getElementById('flash');
+  let maskingOn = true;
+
+  // トグル切替
+  document.getElementById('toggleArea').addEventListener('click', () => {
+    maskingOn = !maskingOn;
+    toggle.className = maskingOn ? 'Toggle _on' : 'Toggle _off';
+    toggleText.textContent = maskingOn ? 'マスキングを適用してコピー' : 'マスキングを適用せずコピー';
+  });
+
+  // コピー実行
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    flash.textContent = maskingOn
+      ? 'マスキングを適用した状態でコピーしました'
+      : 'マスキングを適用せずにコピーしました';
+    flash.style.display = 'block';
+    setTimeout(() => { flash.style.display = 'none'; }, 2000);
+  });
+
+  // キャンセル・×ボタン（モックなので何もしない旨を表示）
+  document.getElementById('cancelBtn').addEventListener('click', () => {
+    flash.textContent = '（キャンセル：ポップアップが閉じます）';
+    flash.style.display = 'block';
+    setTimeout(() => { flash.style.display = 'none'; }, 1500);
+  });
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    flash.textContent = '（×ボタン：ポップアップが閉じます）';
+    flash.style.display = 'block';
+    setTimeout(() => { flash.style.display = 'none'; }, 1500);
+  });
+</script>
+
+</body>
+</html>
